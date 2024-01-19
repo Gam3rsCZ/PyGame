@@ -11,10 +11,14 @@ class Game():
         self.running = True
         self.FPS_LIMIT = 60
     
-
-        self.speed = 5
+        # declaring variables
+        self.radius = 7.5
+        self.speed = 7.5
+        self.dots = []
+        self.oldest = 0
+        self.maxDots = 5
         self.playerPosition = pygame.Vector2(self.screen.get_width()/2, self.screen.get_height()/2)
-        self.border = {"LEFT": 0, "RIGHT": self.screen.get_width(), "TOP": 0, "BOTTOM": self.screen.get_height()}
+        self.border = {"LEFT": 0 + self.radius, "RIGHT": self.screen.get_width() - self.radius, "TOP": 0 + self.radius, "BOTTOM": self.screen.get_height() - self.radius}
         
     def gameLoop(self):
         while self.running:
@@ -24,28 +28,13 @@ class Game():
 
             self.screen.fill("black")
 
-            pygame.draw.circle(surface=self.screen, color="white", center=(self.playerPosition), radius=1.0)
+            for dot in self.dots:
+                pygame.draw.circle(surface=self.screen, color="red", center=(dot["X"], dot["Y"]), radius=self.radius/2)
             
-                
+            pygame.draw.circle(surface=self.screen, color="white", center=(self.playerPosition), radius=self.radius)
             
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_UP]:
-                if self.playerPosition.y == self.border["TOP"]:
-                    continue
-                self.playerPosition.y -= self.speed
-            if keys[pygame.K_DOWN]:
-                if self.playerPosition.y == self.border["BOTTOM"]:
-                    continue
-                self.playerPosition.y += self.speed
-            if keys[pygame.K_LEFT]:
-                if self.playerPosition.x == self.border["LEFT"]:
-                    continue
-                self.playerPosition.x -= self.speed
-            if keys[pygame.K_RIGHT]:
-                if self.playerPosition.x == self.border["RIGHT"]:
-                    continue
-                self.playerPosition.x += self.speed
-
+            self.controls()
+            
 
 
 
@@ -54,3 +43,38 @@ class Game():
             self.clock.tick(self.FPS_LIMIT)  # limits FPS
         pygame.quit()
         exit()
+        
+    def controls(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP]:
+            if self.playerPosition.y <= self.border["TOP"]:
+                return
+            self.playerPosition.y -= self.speed
+        if keys[pygame.K_DOWN]:
+            if self.playerPosition.y >= self.border["BOTTOM"]:
+                return
+            self.playerPosition.y += self.speed
+        if keys[pygame.K_LEFT]:
+            if self.playerPosition.x <= self.border["LEFT"]:
+                return
+            self.playerPosition.x -= self.speed
+        if keys[pygame.K_RIGHT]:
+            if self.playerPosition.x >= self.border["RIGHT"]:
+                return
+            self.playerPosition.x += self.speed
+        if keys[pygame.K_ESCAPE]:
+            self.running = False
+        if keys[pygame.K_w]:
+            if {"X": self.playerPosition.x, "Y": self.playerPosition.y} in self.dots:
+                return
+            elif len(self.dots) < self.maxDots:
+                self.dots.append({"X": self.playerPosition.x, "Y": self.playerPosition.y})
+            else:
+                if self.oldest < self.maxDots:
+                    self.dots.pop(self.oldest)
+                    self.dots.insert(self.oldest, {"X": self.playerPosition.x, "Y": self.playerPosition.y})
+                    self.oldest +=1
+                else:
+                    self.oldest = 0
+        if keys[pygame.K_s]:
+            self.dots.clear()
