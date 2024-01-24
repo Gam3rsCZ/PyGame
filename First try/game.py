@@ -44,52 +44,50 @@ class Game():
             self.screen.fill("black")
 
             #Player 1 projectiles
-            if len(self.projectiles1) != 0:
-                for projectile in self.projectiles1:
-                    playerHitbox = pygame.Rect(self.player2Position.x, self.player2Position.y, self.radius, self.radius)
-                    projectileHitbox = pygame.Rect(projectile["X"], projectile["Y"], self.projectileRadius, self.projectileRadius)
-                
-                    #Collision with player
-                    if self.player2IsAlive:
-                        if projectileHitbox.colliderect(playerHitbox):
-                            if (self.player2HP - 1) != 0:
-                                self.player2HP -= 1
-                            else:
-                                self.player2IsAlive = False
-                            self.projectiles1.remove({"X": projectile["X"],"Y": projectile["Y"]})
-                    
-                    #Collision with screen border
-                    elif (projectile["X"] > self.screen.get_width()) or (projectile["Y"] > self.screen.get_height()) or (projectile["X"] < 0) or (projectile["Y"] < 0):
+            for projectile in self.projectiles1:
+                playerHitbox = pygame.Rect(self.player2Position.x, self.player2Position.y, self.radius, self.radius)
+                projectileHitbox = pygame.Rect(projectile["X"], projectile["Y"], self.projectileRadius, self.projectileRadius)
+
+                #Collision with player
+                if self.player2IsAlive:
+                    if projectileHitbox.colliderect(playerHitbox):
+                        if (self.player2HP - 1) == 0:
+                            self.player2IsAlive = False
+                        else:
+                            self.player2HP -= 1
                         self.projectiles1.remove({"X": projectile["X"],"Y": projectile["Y"]})
                     
-                    #Projectile movement
-                    else:
-                        projectile["X"] += self.projectileSpeed
-                        pygame.draw.circle(surface=self.screen, color="red", center=(projectile["X"], projectile["Y"]), radius=self.projectileRadius)
+                #Collision with screen border
+                if (projectile["X"] > self.screen.get_width()) or (projectile["Y"] > self.screen.get_height()) or (projectile["X"] < 0) or (projectile["Y"] < 0):
+                    self.projectiles1.remove({"X": projectile["X"],"Y": projectile["Y"]})
+                    
+                #Projectile movement
+                else:
+                    projectile["X"] += self.projectileSpeed
+                    pygame.draw.circle(surface=self.screen, color="red", center=(projectile["X"], projectile["Y"]), radius=self.projectileRadius)
                     
             #Player 2 projectiles
-            if len(self.projectiles2) != 0:
-                for projectile in self.projectiles2:
-                    playerHitbox = pygame.Rect(self.player1Position.x, self.player1Position.y, self.radius, self.radius)
-                    projectileHitbox = pygame.Rect(projectile["X"], projectile["Y"], self.projectileRadius, self.projectileRadius)
+            for projectile in self.projectiles2:
+                playerHitbox = pygame.Rect(self.player1Position.x+18, self.player1Position.y, self.radius, self.radius)
+                projectileHitbox = pygame.Rect(projectile["X"], projectile["Y"], self.projectileRadius, self.projectileRadius)
                 
-                    #Collision with player
-                    if self.player1IsAlive:
-                        if projectileHitbox.colliderect(playerHitbox):
-                            if (self.player1HP - 1) != 0:
-                                self.player1HP -= 1
-                            else:
-                                self.player1IsAlive = False
-                            self.projectiles2.remove({"X": projectile["X"],"Y": projectile["Y"]})
-                    
-                    #Collision with screen border
-                    elif (projectile["X"] > self.screen.get_width()) or (projectile["Y"] > self.screen.get_height()) or (projectile["X"] < (self.radius + self.projectileSpeed)) or (projectile["Y"] < 0):
+                #Collision with player
+                if self.player1IsAlive:
+                    if projectileHitbox.colliderect(playerHitbox):
+                        if (self.player1HP - 1) == 0:
+                            self.player1IsAlive = False
+                        else:
+                            self.player1HP -= 1
                         self.projectiles2.remove({"X": projectile["X"],"Y": projectile["Y"]})
                     
-                    #Projectile movement
-                    else:
-                        projectile["X"] -= self.projectileSpeed
-                        pygame.draw.circle(surface=self.screen, color="red", center=(projectile["X"], projectile["Y"]), radius=self.projectileRadius)
+                #Collision with screen border
+                if (projectile["X"] > self.screen.get_width()) or (projectile["Y"] > self.screen.get_height()) or (projectile["X"] < (self.radius + self.projectileSpeed)) or (projectile["Y"] < 0):
+                    self.projectiles2.remove({"X": projectile["X"],"Y": projectile["Y"]})
+                    
+                #Projectile movement
+                else:
+                    projectile["X"] -= self.projectileSpeed
+                    pygame.draw.circle(surface=self.screen, color="red", center=(projectile["X"], projectile["Y"]), radius=self.projectileRadius)
                 
             #player1
             if self.player1IsAlive:
@@ -188,3 +186,6 @@ class Game():
                         return    
         else:
             return
+        
+game = Game()
+game.gameLoop()
