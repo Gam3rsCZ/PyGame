@@ -1,4 +1,5 @@
 ﻿import pygame
+import threading
 
 class Game():
     
@@ -24,21 +25,23 @@ class Game():
         self.projectiles1 = []
         self.projectiles2 = []
         self.maxProjectiles = 1
-        self.projectileRadius = self.playerSize/20
-        self.projectileSpeed = self.speed * 3
+        self.projectileRadius = self.playerSize/15
+        self.projectileSpeed = self.speed * 6
         self.playerHP = 1
-        self.border = {"LEFT": 0 + self.playerSize, "RIGHT": self.screen.get_width() - self.playerSize, "TOP": 0 + self.playerSize, "BOTTOM": self.screen.get_height() - self.playerSize}
+        self.border = {"LEFT": 0 + self.playerSize, "RIGHT": self.screen.get_width() - self.playerSize*2, "TOP": 0 + self.playerSize, "BOTTOM": self.screen.get_height() - self.playerSize}
         self.resizedIcon = pygame.transform.scale(self.icon, (self.screen.get_width(), self.screen.get_height()))
         self.resizedPlayer = pygame.transform.scale(self.playerImage, (self.playerSize, self.playerSize)).convert()
+        self.projectileColor = "blue"
+        self.backgroundColor = "black"
         
         #Player 1
-        self.player1Position = pygame.Vector2(self.screen.get_width()/20, self.screen.get_height()/2)
+        self.player1Position = pygame.Vector2(self.playerSize, self.screen.get_height()/2)
         self.player1HP = self.playerHP
         self.player1IsAlive = True
         self.player1_keys = set()
         
         #Player 2
-        self.player2Position = pygame.Vector2((self.screen.get_width()/20)*19, self.screen.get_height()/2)
+        self.player2Position = pygame.Vector2((self.screen.get_width() - self.playerSize*2), self.screen.get_height()/2)
         self.player2HP = self.playerHP
         self.player2IsAlive = True
         self.player2_keys = set()
@@ -52,7 +55,7 @@ class Game():
                 
 
             #self.screen.blit(self.resizedIcon, (0,0),)
-            self.screen.fill("black")
+            self.screen.fill(self.backgroundColor)
 
             #Player 1 projectiles
             for projectile in self.projectiles1:
@@ -76,7 +79,7 @@ class Game():
                 #Projectile movement
                 else:
                     projectile["X"] += self.projectileSpeed
-                    pygame.draw.circle(surface=self.screen, color="red", center=(projectile["X"], projectile["Y"]), radius=self.projectileRadius)
+                    pygame.draw.circle(surface=self.screen, color=self.projectileColor, center=(projectile["X"], projectile["Y"]), radius=self.projectileRadius)
                     
             #Player 2 projectiles
             for projectile in self.projectiles2:
@@ -100,28 +103,24 @@ class Game():
                 #Projectile movement
                 else:
                     projectile["X"] -= self.projectileSpeed
-                    pygame.draw.circle(surface=self.screen, color="red", center=(projectile["X"], projectile["Y"]), radius=self.projectileRadius)
+                    pygame.draw.circle(surface=self.screen, color=self.projectileColor, center=(projectile["X"], projectile["Y"]), radius=self.projectileRadius)
                 
             #player1
             if self.player1IsAlive:
-                #pygame.draw.circle(surface=self.screen, color="white", center=(self.player1Position), radius=self.radius)
-                #pygame.draw.rect(surface=self.screen, color="white", rect=pygame.Rect(self.player1Position.x, (self.player1Position.y-(self.playerSize/2)), self.playerWidth, self.playerHeight))
-                self.screen.blit(pygame.transform.rotate(self.resizedPlayer, -90.0), (self.player1Position.x, self.player1Position.y - self.playerHeight/2))
+                self.screen.blit(pygame.transform.rotate(self.resizedPlayer, -90.0), (self.player1Position.x - self.playerSize, self.player1Position.y - self.playerSize/2))
             else:
                 pass
                 
             
             #player2
             if self.player2IsAlive:
-                #pygame.draw.circle(surface=self.screen, color="yellow", center=(self.player2Position), radius=self.playerSize)
-                #pygame.draw.rect(surface=self.screen, color="yellow", rect=pygame.Rect(self.player2Position.x, (self.player2Position.y-(self.playerSize/2)), self.playerWidth, self.playerHeight))
-                self.screen.blit(pygame.transform.rotate(self.resizedPlayer, 90.0), (self.player2Position.x, self.player2Position.y - self.playerHeight/2))
+                self.screen.blit(pygame.transform.rotate(self.resizedPlayer, 90.0), (self.player2Position.x + self.playerSize, self.player2Position.y - self.playerSize/2))
             else:
                 pass
                 
-            #Controls
-            self.controls()
 
+            #Controls
+            self.controls_Y()
 
 
             pygame.display.update()
@@ -130,21 +129,13 @@ class Game():
         pygame.quit()
         exit()
 
-    def controls(self):
+    def controls_FULL(self):
         keys = pygame.key.get_pressed()
         
         #game
         if keys[pygame.K_ESCAPE]:
             self.running = False
-
-        if keys[pygame.K_F11]:
-            if pygame.display.is_fullscreen():
-                self.screen = pygame.display.set_mode((800,600))
-                pygame.display.toggle_fullscreen()
-            else:
-                self.screen = pygame.display.set_mode((1920,1080))
-                pygame.display.toggle_fullscreen()
-
+            
             
         #player 1 movement
         if self.player1IsAlive:
@@ -156,18 +147,6 @@ class Game():
                 if self.player1Position.y >= self.border["BOTTOM"]:
                     return
                 self.player1Position.y += self.speed
-
-            if keys[pygame.K_a]:
-                if self.player1Position.x <= self.border["LEFT"]:
-                    return
-                self.player1Position.x -= self.speed
-            if keys[pygame.K_d]:
-                if self.player1Position.x >= self.border["RIGHT"]:
-                    return
-                elif self.player1Position.x >= self.screen.get_width()/4:
-                    return
-                self.player1Position.x += self.speed
-
             if keys[pygame.K_SPACE]:
                 if {"X":int(self.player1Position.x), "Y":int(self.player1Position.y)} in self.projectiles1:
                     return
@@ -176,7 +155,17 @@ class Game():
                         self.projectiles1.append({"X":int(self.player1Position.x), "Y":int(self.player1Position.y)})
                     else:
                         return
-        
+            if keys[pygame.K_a]:
+                if self.player1Position.x <= self.border["LEFT"]:
+                    return
+                self.player1Position.x -= self.speed
+            if keys[pygame.K_d]:
+                if self.player1Position.x >= self.border["RIGHT"]:
+                    return
+                elif self.player1Position.x >= ((self.screen.get_width()/4) - self.playerSize/2):
+                    return
+                self.player1Position.x += self.speed
+
         #player 2 movement 
         if self.player2IsAlive:
             if keys[pygame.K_UP]:
@@ -187,18 +176,59 @@ class Game():
                 if self.player2Position.y >= self.border["BOTTOM"]:
                     return
                 self.player2Position.y += self.speed
-
             if keys[pygame.K_LEFT]:
                 if self.player2Position.x <= self.border["LEFT"]:
                     return
-                elif self.player2Position.x <= (self.screen.get_width()/4 * 3):
+                elif self.player2Position.x <= ((self.screen.get_width()/4 * 3) - self.playerSize/2):
                     return
                 self.player2Position.x -= self.speed
             if keys[pygame.K_RIGHT]:
                 if self.player2Position.x >= self.border["RIGHT"]:
                     return
                 self.player2Position.x += self.speed
+            if keys[pygame.K_RSHIFT]:
+                if {"X":int(self.player2Position.x), "Y":int(self.player2Position.y)} in self.projectiles2:
+                    return
+                else:
+                    if len(self.projectiles2) < self.maxProjectiles:
+                        self.projectiles2.append({"X":int(self.player2Position.x), "Y":int(self.player2Position.y)})
+                    else:
+                        return    
+                    
+    def controls_Y(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE]:
+            self.running = False
+            
+        #player 1 movement
+        if self.player1IsAlive:
+            if keys[pygame.K_w]:
+                if self.player1Position.y <= self.border["TOP"]:
+                    return
+                self.player1Position.y -= self.speed
+            if keys[pygame.K_s]:
+                if self.player1Position.y >= self.border["BOTTOM"]:
+                    return
+                self.player1Position.y += self.speed
+            if keys[pygame.K_SPACE]:
+                if {"X":int(self.player1Position.x), "Y":int(self.player1Position.y)} in self.projectiles1:
+                    return
+                else:
+                    if len(self.projectiles1) < self.maxProjectiles:
+                        self.projectiles1.append({"X":int(self.player1Position.x), "Y":int(self.player1Position.y)})
+                    else:
+                        return
 
+        #player 2 movement 
+        if self.player2IsAlive:
+            if keys[pygame.K_UP]:
+                if self.player2Position.y <= self.border["TOP"]:
+                    return
+                self.player2Position.y -= self.speed
+            if keys[pygame.K_DOWN]:
+                if self.player2Position.y >= self.border["BOTTOM"]:
+                    return
+                self.player2Position.y += self.speed
             if keys[pygame.K_RSHIFT]:
                 if {"X":int(self.player2Position.x), "Y":int(self.player2Position.y)} in self.projectiles2:
                     return
